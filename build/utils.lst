@@ -1,0 +1,368 @@
+ARM GAS  /tmp/ccidQ6oN.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"utils.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.strlen_or_err,"ax",%progbits
+  18              		.align	1
+  19              		.arch armv7e-m
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  23              		.fpu fpv4-sp-d16
+  25              	strlen_or_err:
+  26              	.LVL0:
+  27              	.LFB132:
+  28              		.file 1 "Core/Src/utils.c"
+   1:Core/Src/utils.c **** #include <string.h>
+   2:Core/Src/utils.c **** #include <stdint.h>
+   3:Core/Src/utils.c **** #include <stdbool.h>
+   4:Core/Src/utils.c **** 
+   5:Core/Src/utils.c **** #include "main.h"
+   6:Core/Src/utils.c **** #include "utils.h"
+   7:Core/Src/utils.c **** 
+   8:Core/Src/utils.c **** 
+   9:Core/Src/utils.c **** struct utils_print_config print_config;
+  10:Core/Src/utils.c **** 
+  11:Core/Src/utils.c **** 
+  12:Core/Src/utils.c **** static int strlen_or_err(char *message, uint16_t max_len);
+  13:Core/Src/utils.c **** 
+  14:Core/Src/utils.c **** /* Public Api */
+  15:Core/Src/utils.c **** void utils_print_init(UART_HandleTypeDef *uart, uint16_t timeout)
+  16:Core/Src/utils.c **** {
+  17:Core/Src/utils.c ****     print_config.uart = uart;
+  18:Core/Src/utils.c ****     print_config.timeout = timeout;
+  19:Core/Src/utils.c ****     memset(print_config.uart_buffer, 0, sizeof(print_config.uart_buffer));
+  20:Core/Src/utils.c **** }
+  21:Core/Src/utils.c **** 
+  22:Core/Src/utils.c **** 
+  23:Core/Src/utils.c **** 
+  24:Core/Src/utils.c **** /* Private functions */
+  25:Core/Src/utils.c **** void utils_print_private(char *message)
+  26:Core/Src/utils.c **** {
+  27:Core/Src/utils.c ****     int message_len = strlen_or_err(message, sizeof(print_config.uart_buffer));
+  28:Core/Src/utils.c **** 
+  29:Core/Src/utils.c ****     if (message_len > 0) {
+  30:Core/Src/utils.c ****         HAL_UART_Transmit(print_config.uart, (uint8_t*)message,
+ARM GAS  /tmp/ccidQ6oN.s 			page 2
+
+
+  31:Core/Src/utils.c ****                           message_len, print_config.timeout);
+  32:Core/Src/utils.c ****     }
+  33:Core/Src/utils.c **** }
+  34:Core/Src/utils.c **** 
+  35:Core/Src/utils.c **** /**
+  36:Core/Src/utils.c ****  *  Returns negative number when message length exceeds max_len.
+  37:Core/Src/utils.c ****  *  Otherwise returns the len of message
+  38:Core/Src/utils.c ****  */
+  39:Core/Src/utils.c **** int strlen_or_err(char *message, uint16_t max_len)
+  40:Core/Src/utils.c **** {
+  29              		.loc 1 40 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 0
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		@ link register save eliminated.
+  34              		.loc 1 40 1 is_stmt 0 view .LVU1
+  35 0000 10B4     		push	{r4}
+  36              	.LCFI0:
+  37              		.cfi_def_cfa_offset 4
+  38              		.cfi_offset 4, -4
+  39 0002 0346     		mov	r3, r0
+  41:Core/Src/utils.c ****     int len = 0;
+  40              		.loc 1 41 5 is_stmt 1 view .LVU2
+  41              	.LVL1:
+  42:Core/Src/utils.c ****     char *cptr = message;
+  42              		.loc 1 42 5 view .LVU3
+  43:Core/Src/utils.c ****     int ret = -1;
+  43              		.loc 1 43 5 view .LVU4
+  44:Core/Src/utils.c ****     /* validate max_len */
+  45:Core/Src/utils.c ****     max_len = max_len < 0 ? -max_len : max_len;
+  44              		.loc 1 45 5 view .LVU5
+  46:Core/Src/utils.c **** 
+  47:Core/Src/utils.c ****     while ((len < max_len) && *cptr) {
+  45              		.loc 1 47 5 view .LVU6
+  41:Core/Src/utils.c ****     char *cptr = message;
+  46              		.loc 1 41 9 is_stmt 0 view .LVU7
+  47 0004 0020     		movs	r0, #0
+  48              	.LVL2:
+  49              	.L2:
+  50              		.loc 1 47 11 is_stmt 1 view .LVU8
+  51              		.loc 1 47 17 is_stmt 0 view .LVU9
+  52 0006 0C46     		mov	r4, r1
+  53              		.loc 1 47 11 view .LVU10
+  54 0008 8142     		cmp	r1, r0
+  55 000a 04DD     		ble	.L3
+  56              		.loc 1 47 31 discriminator 1 view .LVU11
+  57 000c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+  58              		.loc 1 47 28 discriminator 1 view .LVU12
+  59 000e 12B1     		cbz	r2, .L3
+  48:Core/Src/utils.c ****         cptr++;
+  60              		.loc 1 48 9 is_stmt 1 view .LVU13
+  61              		.loc 1 48 13 is_stmt 0 view .LVU14
+  62 0010 0133     		adds	r3, r3, #1
+  63              	.LVL3:
+  49:Core/Src/utils.c ****         len++;
+  64              		.loc 1 49 9 is_stmt 1 view .LVU15
+  65              		.loc 1 49 12 is_stmt 0 view .LVU16
+ARM GAS  /tmp/ccidQ6oN.s 			page 3
+
+
+  66 0012 0130     		adds	r0, r0, #1
+  67              	.LVL4:
+  68              		.loc 1 49 12 view .LVU17
+  69 0014 F7E7     		b	.L2
+  70              	.L3:
+  50:Core/Src/utils.c ****     }
+  51:Core/Src/utils.c **** 
+  52:Core/Src/utils.c ****     /* max_len exceeded */
+  53:Core/Src/utils.c ****     if (*cptr && (len == max_len)) {
+  71              		.loc 1 53 5 is_stmt 1 view .LVU18
+  72              		.loc 1 53 9 is_stmt 0 view .LVU19
+  73 0016 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  74              	.LVL5:
+  75              		.loc 1 53 8 view .LVU20
+  76 0018 0BB1     		cbz	r3, .L5
+  77              		.loc 1 53 15 discriminator 1 view .LVU21
+  78 001a 8442     		cmp	r4, r0
+  79 001c 08D0     		beq	.L7
+  80              	.L5:
+  54:Core/Src/utils.c ****         ret = -1;
+  55:Core/Src/utils.c ****     } else if (!(*cptr) && (len < max_len)) {
+  81              		.loc 1 55 12 is_stmt 1 view .LVU22
+  82              		.loc 1 55 15 is_stmt 0 view .LVU23
+  83 001e 53B9     		cbnz	r3, .L8
+  84              		.loc 1 55 25 discriminator 1 view .LVU24
+  85 0020 8442     		cmp	r4, r0
+  86 0022 02DD     		ble	.L10
+  87              	.LVL6:
+  88              	.L1:
+  56:Core/Src/utils.c ****         ret = len;
+  57:Core/Src/utils.c ****     } else {
+  58:Core/Src/utils.c ****         ret = -1;
+  59:Core/Src/utils.c ****     }
+  60:Core/Src/utils.c **** 
+  61:Core/Src/utils.c ****     return ret;
+  62:Core/Src/utils.c **** }...
+  89              		.loc 1 62 1 view .LVU25
+  90 0024 5DF8044B 		ldr	r4, [sp], #4
+  91              	.LCFI1:
+  92              		.cfi_remember_state
+  93              		.cfi_restore 4
+  94              		.cfi_def_cfa_offset 0
+  95 0028 7047     		bx	lr
+  96              	.LVL7:
+  97              	.L10:
+  98              	.LCFI2:
+  99              		.cfi_restore_state
+  58:Core/Src/utils.c ****         ret = -1;
+ 100              		.loc 1 58 13 view .LVU26
+ 101 002a 4FF0FF30 		mov	r0, #-1
+ 102              	.LVL8:
+  58:Core/Src/utils.c ****         ret = -1;
+ 103              		.loc 1 58 13 view .LVU27
+ 104 002e F9E7     		b	.L1
+ 105              	.LVL9:
+ 106              	.L7:
+  54:Core/Src/utils.c ****         ret = -1;
+ARM GAS  /tmp/ccidQ6oN.s 			page 4
+
+
+ 107              		.loc 1 54 13 view .LVU28
+ 108 0030 4FF0FF30 		mov	r0, #-1
+ 109              	.LVL10:
+  54:Core/Src/utils.c ****         ret = -1;
+ 110              		.loc 1 54 13 view .LVU29
+ 111 0034 F6E7     		b	.L1
+ 112              	.LVL11:
+ 113              	.L8:
+  58:Core/Src/utils.c ****         ret = -1;
+ 114              		.loc 1 58 13 view .LVU30
+ 115 0036 4FF0FF30 		mov	r0, #-1
+ 116              	.LVL12:
+  61:Core/Src/utils.c ****     return ret;
+ 117              		.loc 1 61 5 is_stmt 1 view .LVU31
+  61:Core/Src/utils.c ****     return ret;
+ 118              		.loc 1 61 12 is_stmt 0 view .LVU32
+ 119 003a F3E7     		b	.L1
+ 120              		.cfi_endproc
+ 121              	.LFE132:
+ 123              		.section	.text.utils_print_init,"ax",%progbits
+ 124              		.align	1
+ 125              		.global	utils_print_init
+ 126              		.syntax unified
+ 127              		.thumb
+ 128              		.thumb_func
+ 129              		.fpu fpv4-sp-d16
+ 131              	utils_print_init:
+ 132              	.LVL13:
+ 133              	.LFB130:
+  16:Core/Src/utils.c **** {
+ 134              		.loc 1 16 1 is_stmt 1 view -0
+ 135              		.cfi_startproc
+ 136              		@ args = 0, pretend = 0, frame = 0
+ 137              		@ frame_needed = 0, uses_anonymous_args = 0
+  16:Core/Src/utils.c **** {
+ 138              		.loc 1 16 1 is_stmt 0 view .LVU34
+ 139 0000 08B5     		push	{r3, lr}
+ 140              	.LCFI3:
+ 141              		.cfi_def_cfa_offset 8
+ 142              		.cfi_offset 3, -8
+ 143              		.cfi_offset 14, -4
+  17:Core/Src/utils.c ****     print_config.uart = uart;
+ 144              		.loc 1 17 5 is_stmt 1 view .LVU35
+  17:Core/Src/utils.c ****     print_config.uart = uart;
+ 145              		.loc 1 17 23 is_stmt 0 view .LVU36
+ 146 0002 054B     		ldr	r3, .L13
+ 147 0004 1860     		str	r0, [r3]
+  18:Core/Src/utils.c ****     print_config.timeout = timeout;
+ 148              		.loc 1 18 5 is_stmt 1 view .LVU37
+  18:Core/Src/utils.c ****     print_config.timeout = timeout;
+ 149              		.loc 1 18 26 is_stmt 0 view .LVU38
+ 150 0006 A3F88410 		strh	r1, [r3, #132]	@ movhi
+  19:Core/Src/utils.c ****     memset(print_config.uart_buffer, 0, sizeof(print_config.uart_buffer));
+ 151              		.loc 1 19 5 is_stmt 1 view .LVU39
+ 152 000a 8022     		movs	r2, #128
+ 153 000c 0021     		movs	r1, #0
+ 154              	.LVL14:
+ARM GAS  /tmp/ccidQ6oN.s 			page 5
+
+
+  19:Core/Src/utils.c ****     memset(print_config.uart_buffer, 0, sizeof(print_config.uart_buffer));
+ 155              		.loc 1 19 5 is_stmt 0 view .LVU40
+ 156 000e 181D     		adds	r0, r3, #4
+ 157              	.LVL15:
+  19:Core/Src/utils.c ****     memset(print_config.uart_buffer, 0, sizeof(print_config.uart_buffer));
+ 158              		.loc 1 19 5 view .LVU41
+ 159 0010 FFF7FEFF 		bl	memset
+ 160              	.LVL16:
+  20:Core/Src/utils.c **** }
+ 161              		.loc 1 20 1 view .LVU42
+ 162 0014 08BD     		pop	{r3, pc}
+ 163              	.L14:
+ 164 0016 00BF     		.align	2
+ 165              	.L13:
+ 166 0018 00000000 		.word	print_config
+ 167              		.cfi_endproc
+ 168              	.LFE130:
+ 170              		.section	.text.utils_print_private,"ax",%progbits
+ 171              		.align	1
+ 172              		.global	utils_print_private
+ 173              		.syntax unified
+ 174              		.thumb
+ 175              		.thumb_func
+ 176              		.fpu fpv4-sp-d16
+ 178              	utils_print_private:
+ 179              	.LVL17:
+ 180              	.LFB131:
+  26:Core/Src/utils.c **** {
+ 181              		.loc 1 26 1 is_stmt 1 view -0
+ 182              		.cfi_startproc
+ 183              		@ args = 0, pretend = 0, frame = 0
+ 184              		@ frame_needed = 0, uses_anonymous_args = 0
+  26:Core/Src/utils.c **** {
+ 185              		.loc 1 26 1 is_stmt 0 view .LVU44
+ 186 0000 10B5     		push	{r4, lr}
+ 187              	.LCFI4:
+ 188              		.cfi_def_cfa_offset 8
+ 189              		.cfi_offset 4, -8
+ 190              		.cfi_offset 14, -4
+ 191 0002 0446     		mov	r4, r0
+  27:Core/Src/utils.c ****     int message_len = strlen_or_err(message, sizeof(print_config.uart_buffer));
+ 192              		.loc 1 27 5 is_stmt 1 view .LVU45
+  27:Core/Src/utils.c ****     int message_len = strlen_or_err(message, sizeof(print_config.uart_buffer));
+ 193              		.loc 1 27 23 is_stmt 0 view .LVU46
+ 194 0004 8021     		movs	r1, #128
+ 195 0006 FFF7FEFF 		bl	strlen_or_err
+ 196              	.LVL18:
+  29:Core/Src/utils.c ****     if (message_len > 0) {
+ 197              		.loc 1 29 5 is_stmt 1 view .LVU47
+  29:Core/Src/utils.c ****     if (message_len > 0) {
+ 198              		.loc 1 29 8 is_stmt 0 view .LVU48
+ 199 000a 021E     		subs	r2, r0, #0
+ 200 000c 00DC     		bgt	.L18
+ 201              	.LVL19:
+ 202              	.L15:
+  33:Core/Src/utils.c **** }
+ 203              		.loc 1 33 1 view .LVU49
+ARM GAS  /tmp/ccidQ6oN.s 			page 6
+
+
+ 204 000e 10BD     		pop	{r4, pc}
+ 205              	.LVL20:
+ 206              	.L18:
+  30:Core/Src/utils.c ****         HAL_UART_Transmit(print_config.uart, (uint8_t*)message,
+ 207              		.loc 1 30 9 is_stmt 1 view .LVU50
+  31:Core/Src/utils.c ****                           message_len, print_config.timeout);
+ 208              		.loc 1 31 52 is_stmt 0 view .LVU51
+ 209 0010 0448     		ldr	r0, .L19
+ 210              	.LVL21:
+  30:Core/Src/utils.c ****         HAL_UART_Transmit(print_config.uart, (uint8_t*)message,
+ 211              		.loc 1 30 9 view .LVU52
+ 212 0012 B0F88430 		ldrh	r3, [r0, #132]
+ 213 0016 92B2     		uxth	r2, r2
+ 214              	.LVL22:
+  30:Core/Src/utils.c ****         HAL_UART_Transmit(print_config.uart, (uint8_t*)message,
+ 215              		.loc 1 30 9 view .LVU53
+ 216 0018 2146     		mov	r1, r4
+ 217 001a 0068     		ldr	r0, [r0]
+ 218 001c FFF7FEFF 		bl	HAL_UART_Transmit
+ 219              	.LVL23:
+  33:Core/Src/utils.c **** }
+ 220              		.loc 1 33 1 view .LVU54
+ 221 0020 F5E7     		b	.L15
+ 222              	.L20:
+ 223 0022 00BF     		.align	2
+ 224              	.L19:
+ 225 0024 00000000 		.word	print_config
+ 226              		.cfi_endproc
+ 227              	.LFE131:
+ 229              		.comm	print_config,136,4
+ 230              		.text
+ 231              	.Letext0:
+ 232              		.file 2 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/lib/gcc/arm-none-eabi/9.3.1/include
+ 233              		.file 3 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/arm-none-eabi/include/machine/_defa
+ 234              		.file 4 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/arm-none-eabi/include/sys/_types.h"
+ 235              		.file 5 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/arm-none-eabi/include/sys/reent.h"
+ 236              		.file 6 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/arm-none-eabi/include/sys/lock.h"
+ 237              		.file 7 "/home/filip/gccarm/gcc-arm-none-eabi-9-2020-q2-update/arm-none-eabi/include/sys/_stdint.h
+ 238              		.file 8 "Drivers/CMSIS/Include/core_cm4.h"
+ 239              		.file 9 "Drivers/CMSIS/Device/ST/STM32F3xx/Include/system_stm32f3xx.h"
+ 240              		.file 10 "Drivers/CMSIS/Device/ST/STM32F3xx/Include/stm32f303xe.h"
+ 241              		.file 11 "Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_def.h"
+ 242              		.file 12 "Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_dma.h"
+ 243              		.file 13 "Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_uart.h"
+ 244              		.file 14 "Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal.h"
+ 245              		.file 15 "Core/Src/utils.h"
+ 246              		.file 16 "<built-in>"
+ARM GAS  /tmp/ccidQ6oN.s 			page 7
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 utils.c
+     /tmp/ccidQ6oN.s:18     .text.strlen_or_err:0000000000000000 $t
+     /tmp/ccidQ6oN.s:25     .text.strlen_or_err:0000000000000000 strlen_or_err
+     /tmp/ccidQ6oN.s:124    .text.utils_print_init:0000000000000000 $t
+     /tmp/ccidQ6oN.s:131    .text.utils_print_init:0000000000000000 utils_print_init
+     /tmp/ccidQ6oN.s:166    .text.utils_print_init:0000000000000018 $d
+                            *COM*:0000000000000088 print_config
+     /tmp/ccidQ6oN.s:171    .text.utils_print_private:0000000000000000 $t
+     /tmp/ccidQ6oN.s:178    .text.utils_print_private:0000000000000000 utils_print_private
+     /tmp/ccidQ6oN.s:225    .text.utils_print_private:0000000000000024 $d
+
+UNDEFINED SYMBOLS
+memset
+HAL_UART_Transmit
