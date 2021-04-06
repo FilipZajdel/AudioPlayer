@@ -22,12 +22,13 @@ void utils_print_init(UART_HandleTypeDef *uart, uint16_t timeout)
 
 
 /* Private functions */
-void utils_print_private(char *message)
+void utils_print_private(void)
 {
-    int message_len = strlen_or_err(message, sizeof(print_config.uart_buffer));
+    int message_len = strlen_or_err(print_config.uart_buffer,
+                                    sizeof(print_config.uart_buffer));
 
     if (message_len > 0) {
-        HAL_UART_Transmit(print_config.uart, (uint8_t*)message,
+        HAL_UART_Transmit(print_config.uart, (uint8_t*)print_config.uart_buffer,
                           message_len, print_config.timeout);
     }
 }

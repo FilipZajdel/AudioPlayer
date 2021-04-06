@@ -26,15 +26,15 @@ void utils_print_init(UART_HandleTypeDef *uart_handle, uint16_t timeout);
 #if (UTILS_LOG_LEVEL >= UTILS_LOG_LEVEL_INFO)
 #define UTILS_PRINT_INFO(args...) \
     do { sprintf(print_config.uart_buffer, args); \
-         utils_print_private(args); } while(0);
+         utils_print_private(); } while(0);
 #else
 #endif
 
 #if (UTILS_LOG_LEVEL >= UTILS_LOG_LEVEL_DEBUG)
 #define UTILS_PRINT_DEBUG(args...) \
     do { sprintf(print_config.uart_buffer, args); \
-         utils_print_private(args); } while(0);
+         utils_print_private(); } while(0);
 #else
 #endif
 
-void utils_print_private(char *message);
+void utils_print_private(void);
