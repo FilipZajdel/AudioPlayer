@@ -1,18 +1,20 @@
 #include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
 
-#include "main.h"
-#include "utils.h"
+#include "config.h"
 
+#define USART_UART_TX UTILS_UART_USART_TX_FUNC
 
-struct utils_print_config print_config;
+static struct utils_print_config {
+    UTILS_UART_USART_HANDLE_TYPE *uart;
+    char uart_buffer[UTILS_PRINT_BUFFER_SIZE];
+    uint16_t timeout;
+} print_config;
 
-
-static int strlen_or_err(char *message, uint16_t max_len);
 
 /* Public Api */
-void utils_print_init(UART_HandleTypeDef *uart, uint16_t timeout)
+
+void utils_print_init(UTILS_UART_USART_HANDLE_TYPE *uart, uint16_t timeout)
 {
     print_config.uart = uart;
     print_config.timeout = timeout;
@@ -22,20 +24,10 @@ void utils_print_init(UART_HandleTypeDef *uart, uint16_t timeout)
 
 
 /* Private functions */
-void utils_print_private(void)
-{
-    int message_len = strlen_or_err(print_config.uart_buffer,
-                                    sizeof(print_config.uart_buffer));
-
-    if (message_len > 0) {
-        HAL_UART_Transmit(print_config.uart, (uint8_t*)print_config.uart_buffer,
-                          message_len, print_config.timeout);
-    }
-}
 
 /**
- *  Returns negative number when message length exceeds max_len.
- *  Otherwise returns the len of message
+ *  Returns the negative when message length exceeds max_len.
+ *  Otherwise returns the len of message.
  */
 int strlen_or_err(char *message, uint16_t max_len)
 {
@@ -43,7 +35,6 @@ int strlen_or_err(char *message, uint16_t max_len)
     char *cptr = message;
     int ret = -1;
     /* validate max_len */
-    max_len = max_len < 0 ? -max_len : max_len;
 
     while ((len < max_len) && *cptr) {
         cptr++;
@@ -60,4 +51,20 @@ int strlen_or_err(char *message, uint16_t max_len)
     }
 
     return ret;
+}
+
+char *utils_get_buf_private(void)
+{
+    return print_config.uart_buffer;
+}
+
+void utils_print_private(void)
+{
+    int message_len = strlen_or_err(print_config.uart_buffer,
+                                    sizeof(print_config.uart_buffer));
+
+    if (message_len > 0) {
+        USART_UART_TX(print_config.uart, (uint8_t*)print_config.uart_buffer,
+                      message_len, print_config.timeout);
+    }
 }

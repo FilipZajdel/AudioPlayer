@@ -1,40 +1,41 @@
 #pragma once
 
-#define UTILS_LOG_LEVEL_DEBUG (1)   /* The most verbose logging level */
-#define UTILS_LOG_LEVEL_INFO  (0)   /* The most modest logging level */
-#define UTILS_PRINT_BUFFER_SIZE 128
+#include "config.h"
 
 
+void utils_print_init(UTILS_UART_USART_HANDLE_TYPE *uart_handle,
+                      uint16_t                      timeout);
+
+
+#define UTILS_LOG_LEVEL_DEBUG (1)
+#define UTILS_LOG_LEVEL_INFO  (0)
 
 #ifndef UTILS_LOG_LEVEL
 #define UTILS_LOG_LEVEL       (UTILS_LOG_LEVEL_DEBUG)
+#pragma message("UTILS_LOG_LEVEL is not defined. Using UTILS_LOG_LEVEL_DEBUG.")
 #endif
 
-
-struct utils_print_config {
-    UART_HandleTypeDef *uart;
-    char uart_buffer[UTILS_PRINT_BUFFER_SIZE];
-    uint16_t timeout;
-};
-
-extern struct utils_print_config print_config;
+#define STRINGIFY(arg) #arg
+#define TO_STR(arg) STRINGIFY(arg)
 
 
-
-void utils_print_init(UART_HandleTypeDef *uart_handle, uint16_t timeout);
+#define UTILS_PRINT(args...) \
+    do { sprintf(utils_get_buf_private(), args); \
+         utils_print_private(); } while(0);
 
 #if (UTILS_LOG_LEVEL >= UTILS_LOG_LEVEL_INFO)
 #define UTILS_PRINT_INFO(args...) \
-    do { sprintf(print_config.uart_buffer, args); \
-         utils_print_private(); } while(0);
+    UTILS_PRINT("<info> " args)
 #else
+#define UTILS_PRINT_INFO(args...)
 #endif
 
 #if (UTILS_LOG_LEVEL >= UTILS_LOG_LEVEL_DEBUG)
 #define UTILS_PRINT_DEBUG(args...) \
-    do { sprintf(print_config.uart_buffer, args); \
-         utils_print_private(); } while(0);
+    UTILS_PRINT("<dbg> " __FILE__ ":" TO_STR(__LINE__) " " args)
 #else
+#define UTILS_PRINT_DEBUG(args...)
 #endif
 
 void utils_print_private(void);
+char *utils_get_buf_private(void);

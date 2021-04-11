@@ -27,6 +27,7 @@
 #include <stdbool.h>
 
 #include "utils.h"
+#include "config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define AUDIO_BUFFER_SIZE (8)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -62,8 +63,8 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-static uint32_t i2s_buf[AUDIO_BUFFER_SIZE];
-audio_sample_t  samples[AUDIO_BUFFER_SIZE];
+static uint32_t i2s_buf[APP_AUDIO_BUFFER_SIZE];
+audio_sample_t  samples[APP_AUDIO_BUFFER_SIZE];
 static uint16_t current_sample_idx;
 static bool     playing_blocked;
 /* USER CODE END PV */
@@ -157,12 +158,15 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    for (int i=0; i<sizeof(samples)/sizeof(*samples); i++) {
-      if (!playing_blocked) {
-        UTILS_PRINT_DEBUG("%d; %d\n\r", samples[i].left_channel,
-                                        samples[i].right_channel);
-      }
-    }
+    // for (int i=0; i<sizeof(samples)/sizeof(*samples); i++) {
+    //   if (!playing_blocked) {
+    //     UTILS_PRINT_DEBUG("%d; %d\n\r", samples[i].left_channel,
+    //                                     samples[i].right_channel);
+    //   }
+    // }
+    static unsigned long ctr;
+    UTILS_PRINT_DEBUG("%lu\n", ctr++);
+    UTILS_PRINT_INFO("%lu\n", ctr++);
 
     HAL_Delay(100);
   }
