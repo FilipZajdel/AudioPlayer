@@ -51,11 +51,17 @@ typedef union audio_sample {
   uint32_t data;
 } __attribute__((packed)) audio_sample_t;
 
+typedef struct audio_buffer {
+  uint16_t left_channel[APP_AUDIO_BUFFER_SIZE];
+  uint16_t right_channel[APP_AUDIO_BUFFER_SIZE];
+} audio_buffer_t;
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 DAC_HandleTypeDef hdac1;
+DMA_HandleTypeDef hdma_dac1_ch1;
+DMA_HandleTypeDef hdma_dac1_ch2;
 
 I2S_HandleTypeDef hi2s2;
 
@@ -64,8 +70,9 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-RING_BUFFER_DECLARE(samples, APP_AUDIO_BUFFER_SIZE*4);
 static uint32_t i2s_buf[APP_AUDIO_BUFFER_SIZE];
+static audio_buffer_t audio_buffer;
+static uint16_t left_channel[APP_AUDIO_BUFFER_SIZE];
 static uint16_t current_sample_idx;
 static bool     playing_blocked;
 /* USER CODE END PV */
@@ -73,6 +80,7 @@ static bool     playing_blocked;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -83,31 +91,14 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  audio_sample_t audio_sample;
-
-  if (ringBufferGet(&samples, &audio_sample.data) == 0) {
-
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1,
-                    DAC_ALIGN_12B_R, audio_sample.left_channel);
-
-    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2,
-                    DAC_ALIGN_12B_R, audio_sample.right_channel);
-  }
-}
-
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
   for (int i = 0; i < sizeof(i2s_buf)/sizeof(*i2s_buf); i++) {
+
     audio_sample_t audio_sample = { .data = i2s_buf[i] };
 
-    audio_sample.left_channel  = (audio_sample.left_channel / 16) + 2048;
-    audio_sample.right_channel = (audio_sample.right_channel / 16) + 2048;
-
-    ringBufferPut(&samples, audio_sample.data);
+    audio_buffer.left_channel[i] =  (audio_sample.left_channel / 16) + 2048;
+    audio_buffer.right_channel[i] = (audio_sample.right_channel / 16) + 2048;
   }
 
   HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf));
@@ -143,15 +134,22 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2S2_Init();
   MX_DAC1_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  utils_print_init(&huart1, APP_UART_LOGGER_TIMEOUT_MS);
   UTILS_PRINT_INFO("I2S To Dac Coverter started!\n");
-  HAL_TIM_Base_Start_IT(&htim2);
-  utils_print_init(&huart1, 100);
+
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, audio_buffer.left_channel,
+                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, audio_buffer.right_channel,
+                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
+
   HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf)/2);
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,11 +160,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    audio_sample_t audio_sample;
-
     for (int i = 0; i < APP_AUDIO_BUFFER_SIZE; i++) {
-      UTILS_PRINT_INFO("%u %u\n\r", ((audio_sample_t)samples.mem[i]).left_channel,
-                                    ((audio_sample_t)samples.mem[i]).right_channel);
+      UTILS_PRINT_INFO("%u %u\n\r", audio_buffer.left_channel[i],
+                                    audio_buffer.right_channel[i]);
     }
 
     HAL_Delay(100);
@@ -256,7 +252,6 @@ static void MX_DAC1_Init(void)
   }
   /** DAC channel OUT2 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -378,6 +373,25 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+  /* DMA1_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
 
 }
 
