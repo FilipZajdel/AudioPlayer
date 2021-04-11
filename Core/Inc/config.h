@@ -13,7 +13,7 @@
 /** Application config **/
 
 /* The number of audio samples sent in each I2S transaction */
-#define APP_AUDIO_BUFFER_SIZE (8)
+#define APP_AUDIO_BUFFER_SIZE (2)
 
 
 /** Utils config **/

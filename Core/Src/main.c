@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "RingBuffer.h"
 #include "utils.h"
 #include "config.h"
 /* USER CODE END Includes */
@@ -63,8 +64,8 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+RING_BUFFER_DECLARE(samples, APP_AUDIO_BUFFER_SIZE*4);
 static uint32_t i2s_buf[APP_AUDIO_BUFFER_SIZE];
-audio_sample_t  samples[APP_AUDIO_BUFFER_SIZE];
 static uint16_t current_sample_idx;
 static bool     playing_blocked;
 /* USER CODE END PV */
@@ -84,27 +85,30 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN 0 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1,
-                  DAC_ALIGN_12B_R, samples[current_sample_idx].left_channel);
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
-  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2,
-                  DAC_ALIGN_12B_R, samples[current_sample_idx].right_channel);
+  audio_sample_t audio_sample;
 
-  current_sample_idx += playing_blocked ? 0 : 1;
-  playing_blocked = current_sample_idx == sizeof(samples)/sizeof(*samples);
+  if (ringBufferGet(&samples, &audio_sample.data) == 0) {
+
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1,
+                    DAC_ALIGN_12B_R, audio_sample.left_channel);
+
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2,
+                    DAC_ALIGN_12B_R, audio_sample.right_channel);
+  }
 }
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
   for (int i = 0; i < sizeof(i2s_buf)/sizeof(*i2s_buf); i++) {
-    samples[i].data  = i2s_buf[i];
-    samples[i].left_channel  = (samples[i].left_channel / 16) + 2048;
-    samples[i].right_channel = (samples[i].right_channel / 16) + 2048;
-  }
+    audio_sample_t audio_sample = { .data = i2s_buf[i] };
 
-  current_sample_idx = 0;
-  playing_blocked = false;
+    audio_sample.left_channel  = (audio_sample.left_channel / 16) + 2048;
+    audio_sample.right_channel = (audio_sample.right_channel / 16) + 2048;
+
+    ringBufferPut(&samples, audio_sample.data);
+  }
 
   HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf));
 }
@@ -144,6 +148,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  UTILS_PRINT_INFO("I2S To Dac Coverter started!\n");
   HAL_TIM_Base_Start_IT(&htim2);
   utils_print_init(&huart1, 100);
   HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf)/2);
@@ -157,16 +162,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    audio_sample_t audio_sample;
 
-    // for (int i=0; i<sizeof(samples)/sizeof(*samples); i++) {
-    //   if (!playing_blocked) {
-    //     UTILS_PRINT_DEBUG("%d; %d\n\r", samples[i].left_channel,
-    //                                     samples[i].right_channel);
-    //   }
-    // }
-    static unsigned long ctr;
-    UTILS_PRINT_DEBUG("%lu\n", ctr++);
-    UTILS_PRINT_INFO("%lu\n", ctr++);
+    for (int i = 0; i < APP_AUDIO_BUFFER_SIZE; i++) {
+      UTILS_PRINT_INFO("%u %u\n\r", ((audio_sample_t)samples.mem[i]).left_channel,
+                                    ((audio_sample_t)samples.mem[i]).right_channel);
+    }
 
     HAL_Delay(100);
   }

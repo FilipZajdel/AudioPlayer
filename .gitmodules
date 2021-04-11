@@ -1,0 +1,3 @@
+[submodule "Ext/dummy-ring-buffer"]
+	path = Ext/dummy-ring-buffer
+	url = https://github.com/FilipZajdel/dummy-ring-buffer
