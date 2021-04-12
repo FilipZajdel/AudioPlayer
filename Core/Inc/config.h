@@ -13,8 +13,8 @@
 /** Application config **/
 
 /* The number of audio samples sent in each I2S transaction */
-#define APP_AUDIO_BUFFER_SIZE (2)
-#define APP_UART_LOGGER_TIMEOUT_MS (50)
+#define APP_AUDIO_BUFFER_SIZE 2U
+#define APP_UART_LOGGER_TIMEOUT_MS 50U
 
 /** Utils config **/
 
@@ -26,7 +26,7 @@
 #define UTILS_LOG_LEVEL (UTILS_LOG_LEVEL_DEBUG)
 
 /* The size of buffer used to logging. Expressed in bytes. */
-#define UTILS_PRINT_BUFFER_SIZE 128
+#define UTILS_PRINT_BUFFER_SIZE 128U
 
 /* The hal typedef of uart/usart handle. */
 #define UTILS_UART_USART_HANDLE_TYPE UART_HandleTypeDef

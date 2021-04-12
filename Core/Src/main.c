@@ -38,23 +38,27 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define APP_I2S_BUFFER_SIZE APP_AUDIO_BUFFER_SIZE
 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-typedef union audio_sample {
-  struct {
-    int16_t left_channel;
-    int16_t right_channel;
-  };
-  uint32_t data;
-} __attribute__((packed)) audio_sample_t;
+typedef struct app_context {
 
-typedef struct audio_buffer {
-  uint16_t left_channel[APP_AUDIO_BUFFER_SIZE];
-  uint16_t right_channel[APP_AUDIO_BUFFER_SIZE];
-} audio_buffer_t;
+  struct audio_buffer {
+    uint16_t left_channel[APP_AUDIO_BUFFER_SIZE];
+    uint16_t right_channel[APP_AUDIO_BUFFER_SIZE];
+  } audio_buffer;
+
+  union audio_sample {
+    struct {
+      int16_t left_channel;
+      int16_t right_channel;
+    };
+    uint32_t data;
+  } __attribute__((packed)) i2s_buffer[APP_I2S_BUFFER_SIZE];
+} app_context_t;
 
 /* USER CODE END PM */
 
@@ -62,19 +66,12 @@ typedef struct audio_buffer {
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1_ch1;
 DMA_HandleTypeDef hdma_dac1_ch2;
-
 I2S_HandleTypeDef hi2s2;
-
 TIM_HandleTypeDef htim2;
-
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-static uint32_t i2s_buf[APP_AUDIO_BUFFER_SIZE];
-static audio_buffer_t audio_buffer;
-static uint16_t left_channel[APP_AUDIO_BUFFER_SIZE];
-static uint16_t current_sample_idx;
-static bool     playing_blocked;
+static app_context_t app_context;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,15 +90,15 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN 0 */
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-  for (int i = 0; i < sizeof(i2s_buf)/sizeof(*i2s_buf); i++) {
-
-    audio_sample_t audio_sample = { .data = i2s_buf[i] };
-
-    audio_buffer.left_channel[i] =  (audio_sample.left_channel / 16) + 2048;
-    audio_buffer.right_channel[i] = (audio_sample.right_channel / 16) + 2048;
+  for (unsigned i = 0; i < APP_I2S_BUFFER_SIZE; i++) {
+    app_context.audio_buffer.left_channel[i] =
+                          (app_context.i2s_buffer[i].left_channel / 16) + 2048;
+    app_context.audio_buffer.right_channel[i] =
+                          (app_context.i2s_buffer[i].right_channel / 16) + 2048;
   }
 
-  HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf));
+  HAL_I2S_Receive_IT(&hi2s2, (uint16_t*)app_context.i2s_buffer,
+                     APP_I2S_BUFFER_SIZE);
 }
 
 /* USER CODE END 0 */
@@ -143,12 +140,14 @@ int main(void)
   utils_print_init(&huart1, APP_UART_LOGGER_TIMEOUT_MS);
   UTILS_PRINT_INFO("I2S To Dac Coverter started!\n");
 
-  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, audio_buffer.left_channel,
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,
+                    (uint32_t*)app_context.audio_buffer.left_channel,
                     APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
-  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, audio_buffer.right_channel,
+  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2,
+                    (uint32_t*)app_context.audio_buffer.right_channel,
                     APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
 
-  HAL_I2S_Receive_IT(&hi2s2, i2s_buf, sizeof(i2s_buf)/sizeof(*i2s_buf)/2);
+  HAL_I2S_Receive_IT(&hi2s2, (uint16_t*)app_context.i2s_buffer, APP_I2S_BUFFER_SIZE);
   HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
@@ -161,8 +160,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     for (int i = 0; i < APP_AUDIO_BUFFER_SIZE; i++) {
-      UTILS_PRINT_INFO("%u %u\n\r", audio_buffer.left_channel[i],
-                                    audio_buffer.right_channel[i]);
+      UTILS_PRINT_INFO("%u %u\n\r", app_context.audio_buffer.left_channel[i],
+                                    app_context.audio_buffer.right_channel[i]);
     }
 
     HAL_Delay(100);

@@ -2,13 +2,18 @@
 
 #include "config.h"
 
-
+/** Setup printing utility in blocking mode.
+ *  Args:
+ *  uart_handle - The handle to uart/usart
+ *  timeout     - The timeout of blocking logger
+ */
 void utils_print_init(UTILS_UART_USART_HANDLE_TYPE *uart_handle,
                       uint16_t                      timeout);
 
 
-#define UTILS_LOG_LEVEL_DEBUG (1)
-#define UTILS_LOG_LEVEL_INFO  (0)
+
+#define UTILS_LOG_LEVEL_DEBUG 1u
+#define UTILS_LOG_LEVEL_INFO  0u
 
 #ifndef UTILS_LOG_LEVEL
 #define UTILS_LOG_LEVEL       (UTILS_LOG_LEVEL_DEBUG)
