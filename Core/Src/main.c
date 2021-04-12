@@ -40,6 +40,8 @@
 /* USER CODE BEGIN PD */
 #define APP_I2S_BUFFER_SIZE APP_AUDIO_BUFFER_SIZE
 
+/* I2S Samples are signed and must be shifted, so dac can output proper values */
+#define APP_I2S_SAMPLE_SHIFT(value) (value + 32768)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -66,8 +68,11 @@ typedef struct app_context {
 DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1_ch1;
 DMA_HandleTypeDef hdma_dac1_ch2;
+
 I2S_HandleTypeDef hi2s2;
+
 TIM_HandleTypeDef htim2;
+
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
@@ -92,9 +97,9 @@ void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
   for (unsigned i = 0; i < APP_I2S_BUFFER_SIZE; i++) {
     app_context.audio_buffer.left_channel[i] =
-                          (app_context.i2s_buffer[i].left_channel / 16) + 2048;
+                  APP_I2S_SAMPLE_SHIFT(app_context.i2s_buffer[i].left_channel);
     app_context.audio_buffer.right_channel[i] =
-                          (app_context.i2s_buffer[i].right_channel / 16) + 2048;
+                  APP_I2S_SAMPLE_SHIFT(app_context.i2s_buffer[i].right_channel);
   }
 
   HAL_I2S_Receive_IT(&hi2s2, (uint16_t*)app_context.i2s_buffer,
@@ -142,10 +147,10 @@ int main(void)
 
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1,
                     (uint32_t*)app_context.audio_buffer.left_channel,
-                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
+                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_L);
   HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2,
                     (uint32_t*)app_context.audio_buffer.right_channel,
-                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_R);
+                    APP_AUDIO_BUFFER_SIZE, DAC_ALIGN_12B_L);
 
   HAL_I2S_Receive_IT(&hi2s2, (uint16_t*)app_context.i2s_buffer, APP_I2S_BUFFER_SIZE);
   HAL_TIM_Base_Start_IT(&htim2);
